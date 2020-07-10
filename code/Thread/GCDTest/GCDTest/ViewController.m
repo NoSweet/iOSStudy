@@ -18,8 +18,9 @@
     [super viewDidLoad];
 //    [self creatQueue];
     
-    [self test];
+//    [self test];
 //    [self barrier];
+    [self groupEnterAndLeave];
 }
 
 // 队列创建
@@ -137,6 +138,7 @@
     dispatch_barrier_async(queue, ^{
         NSLog(@"我是一个栅栏函数！");
     });
+    NSLog(@"我是函数"); // 不阻塞线程 影响任务顺序
     dispatch_async(queue, ^{
            for (NSInteger i = 0; i<3; i++) {
                NSLog(@"%zd-download3--%@",i,[NSThread currentThread]);
@@ -202,8 +204,75 @@
     });
 }
 // group实例
-- (void)groupTest {
+// dispatch_group_wait
+- (void)groupWait {
+    NSLog(@"current---%@",[NSThread currentThread]);
+    NSLog(@"group--begin");
     
+    dispatch_group_t group = dispatch_group_create();
+    dispatch_group_async(group, dispatch_get_global_queue(0, 0), ^{
+        // 任务1
+        for (int i = 0; i < 2; i++) {
+            [NSThread sleepForTimeInterval:2];
+            NSLog(@"1--------%@",[NSThread currentThread]);
+        }
+    });
+    
+    dispatch_group_async(group, dispatch_get_global_queue(0, 0), ^{
+        for (int i = 0; i < 2; i ++) {
+            [NSThread sleepForTimeInterval:2];
+            NSLog(@"2-------%@",[NSThread currentThread]);
+        }
+    });
+    
+    // 等待上面任务全部完成后，向下执行（堵塞当前线程
+    dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
+//    dispatch_group_wait(group, 20);
+    NSLog(@"group --- end");
 }
+
+// dispatch_group_enter、dispatch_group_leave
+- (void)groupEnterAndLeave {
+    NSLog(@"current---%@",[NSThread currentThread]);
+    NSLog(@"group---begin");
+    
+    dispatch_group_t group = dispatch_group_create();
+    dispatch_queue_t queue = dispatch_get_global_queue(0, 0);
+    dispatch_group_enter(group);
+    dispatch_async(queue, ^{
+        // 任务1
+        for (int i = 0; i < 2; i ++) {
+            [NSThread sleepForTimeInterval:2];
+            NSLog(@"1--------%@",[NSThread currentThread]);
+        }
+        dispatch_group_leave(group);
+    });
+    
+    dispatch_group_enter(group);
+    dispatch_async(queue, ^{
+        // 任务2
+        for (int i = 0; i < 2; i ++) {
+            [NSThread sleepForTimeInterval:2];
+            NSLog(@"2-----------%@",[NSThread currentThread]);
+        }
+        dispatch_group_leave(group);
+    });
+    
+    dispatch_group_notify(group, dispatch_get_main_queue(), ^{
+        // 前面执行完毕，回到主线程
+        for (int i = 0; i < 2; i ++) {
+            [NSThread sleepForTimeInterval:2];
+            NSLog(@"3-------------%@",[NSThread currentThread]);
+        }
+        NSLog(@"group---end");
+    });
+    
+    NSLog(@"5555555555555555");
+}
+
+
+#pragma mark -- 信号量
+
+
 
 @end

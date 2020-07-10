@@ -58,7 +58,7 @@
     }];
     NSLog(@"3");
     [op start];
-    NSLog(@"4");
+    NSLog(@"5");
 }
 
 // 自定义子类
@@ -70,7 +70,8 @@
 #pragma mark ---------------队列
 - (void)test2 {
 //    [self operationAndQueue];
-    [self inportantOfNSOperation];
+//    [self inportantOfNSOperation];
+//    [self groupWait];
 }
 
 // 结合使用创建多线程
@@ -127,6 +128,7 @@
     // 取消所有的任务，不在执行，不可逆
     [queue cancelAllOperations];
 }
+
 
 
 @end
